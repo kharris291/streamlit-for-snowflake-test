@@ -1,2 +1,7 @@
+numpy<2
 pandas
+pyarrow==9.0.0
 streamlit
+pybind11>=2.12
+watchdog
+plotly
