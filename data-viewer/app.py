@@ -42,8 +42,8 @@ with st.sidebar:
     child = st.selectbox("Child Column Name", cols, index=0)
     parent = st.selectbox("Parent Column Name", cols, index=1)
     df = df_original[[child, parent]]
-    
-    if st.user is not None:
+
+    if st.user is not None and 'email' in st.user:
         st.markdown(f"user: {st.user.email}")
 
 
