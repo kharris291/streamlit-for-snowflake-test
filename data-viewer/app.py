@@ -1,4 +1,5 @@
 import json
+import uuid
 from io import StringIO
 
 import pandas as pd
@@ -11,9 +12,14 @@ st.set_page_config(layout="wide")
 st.title('Hierarchical Data Viewer')
 st.caption("Display you hierarchical data with charts and graphs.")
 
+def getSessionId():
+    if "session_id" not in st.session_state:
+        st.session_state["session_id"] = str(uuid.uuid4())
+    return st.session_state["session_id"]
+
 
 @st.cache_data(show_spinner="Loading the CSV file...")
-def loadFile(filename):
+def loadFile(session_id, filename):
     return pd.read_csv(filename, header=0).convert_dtypes()
 
 
@@ -27,7 +33,7 @@ with st.sidebar:
         file = 'employees.csv'
         filename = "data/employees.csv"
 
-    df_original = loadFile(filename)
+    df_original = loadFile(getSessionId(), filename)
     cols = list(df_original.columns)
 
     child = st.selectbox("Child Column Name", cols, index=0)
