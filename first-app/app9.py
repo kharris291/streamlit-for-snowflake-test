@@ -13,20 +13,42 @@ def getGraph(df):
     return f'digraph {{\n{edges}}}'
 
 
+@st.cache_data
+def loadFile(filename):
+    return pd.read_csv(filename, header=0).convert_dtypes()
+
+
 st.title('Hierarchical Data Viewer')
+
+if "names" in st.session_state:
+    filenames = st.session_state["names"]
+else:
+    filenames =  ["employees.csv"]
+    st.session_state["names"] = filenames
+
 uploaded_file = st.sidebar.file_uploader("Upload a CSV file", type=["csv"], accept_multiple_files=False)
 if uploaded_file is not None:
-    filename= StringIO(uploaded_file.getvalue().decode('utf-8'))
+    filename = StringIO(uploaded_file.getvalue().decode('utf-8'))
+    file = uploaded_file.name
+    if file not in filenames:
+        filenames.append(file)
+        st.session_state["names"] = filenames
+        st.sidebar.write("File uploaded successfully.")
 else:
     filename = "data/employees.csv"
 
-df_original = pd.read_csv(filename, header=0).convert_dtypes()
+
+
+for f in filenames:
+    st.sidebar.write(f)
+
+df_original = loadFile(filename)
 cols = list(df_original.columns)
-child = st.sidebar.selectbox("Child column name", cols, index=0)
-parent = st.sidebar.selectbox("Parent column name", cols, index=1)
+with st.sidebar:
+    child = st.selectbox("Child column name", cols, index=0)
+    parent = st.selectbox("Parent column name", cols, index=1)
+    df = df_original[[child, parent]].copy()
 
-
-df = df_original[[child, parent]].copy()
 tabs = st.tabs(["Source", "Graph", "Dot Chart"])
 
 chart = getGraph(df)
