@@ -7,10 +7,13 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from modules import formats, charts, animated, graphs
+import auth
 
 st.set_page_config(layout="wide")
 st.title('Hierarchical Data Viewer')
 st.caption("Display you hierarchical data with charts and graphs.")
+
+auth.check_user_and_password()
 
 def getSessionId():
     if "session_id" not in st.session_state:
@@ -39,6 +42,8 @@ with st.sidebar:
     child = st.selectbox("Child Column Name", cols, index=0)
     parent = st.selectbox("Parent Column Name", cols, index=1)
     df = df_original[[child, parent]]
+
+    st.markdown(f"user: {st.user.email}")
 
 
 def OnShowList(filename):
