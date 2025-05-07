@@ -18,12 +18,20 @@ def loadFile(filename):
     return pd.read_csv(filename, header=0).convert_dtypes()
 
 
+def OnShowList(filename):
+    if "names" in st.session_state:
+        these_filenames = st.session_state["names"]
+        if filename in these_filenames:
+            st.error("File already exists in the list.")
+            st.stop()
+
+
 st.title('Hierarchical Data Viewer')
 
 if "names" in st.session_state:
     filenames = st.session_state["names"]
 else:
-    filenames =  ["employees.csv"]
+    filenames = ["employees.csv"]
     st.session_state["names"] = filenames
 
 uploaded_file = st.sidebar.file_uploader("Upload a CSV file", type=["csv"], accept_multiple_files=False)
@@ -35,12 +43,16 @@ if uploaded_file is not None:
         st.session_state["names"] = filenames
         st.sidebar.write("File uploaded successfully.")
 else:
+    file= 'employees.csv'
     filename = "data/employees.csv"
 
+st.sidebar.write(file)
 
-
-for f in filenames:
-    st.sidebar.write(f)
+btn = st.sidebar.button("Show list",
+                        on_click=OnShowList, args=(file,))
+if btn:
+    for f in filenames:
+        st.sidebar.write(f)
 
 df_original = loadFile(filename)
 cols = list(df_original.columns)
