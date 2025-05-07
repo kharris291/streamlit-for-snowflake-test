@@ -42,8 +42,9 @@ with st.sidebar:
     child = st.selectbox("Child Column Name", cols, index=0)
     parent = st.selectbox("Parent Column Name", cols, index=1)
     df = df_original[[child, parent]]
-
-    st.markdown(f"user: {st.experimental_user.email}")
+    
+    if st.user is not None:
+        st.markdown(f"user: {st.user.email}")
 
 
 def OnShowList(filename):
