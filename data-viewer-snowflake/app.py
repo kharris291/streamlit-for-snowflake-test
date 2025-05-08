@@ -1,67 +1,68 @@
 import json
 from io import StringIO
 
-import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
-from modules import formats, charts, graphs, utils
+import modules.charts as charts
+import modules.formats as formats
+import modules.graphs as graphs
+import modules.utils as utils
 
 st.set_page_config(layout="wide")
-st.title('Hierarchical Data Viewer')
-st.caption("Display you hierarchical data with charts and graphs.")
-
-
-@st.cache_data(show_spinner="Loading the CSV file...")
-def loadFile(filename):
-    return pd.read_csv(filename, header=0).convert_dtypes()
-
+st.title("Hierarchical Data Viewer")
+st.caption("Display your hierarchical data with charts and graphs.")
 
 with st.sidebar:
-    tableName = st.text_input("Table name")
-    if tableName is not None and len(tableName) > 0:
-        df_original = utils.getDataFrame(f"select * from {tableName}")
+    session = utils.getStreamlitAppSession()
+    if session is None:
+        session = (utils.getLocalSession()
+                   if utils.isLocal()
+                   else utils.getRemoteSession())
+
+    tableName = None
+    if session is not None:
+        tableName = st.text_input("Full table/view name:")
+
+    hasTable = session is not None and tableName is not None and len(tableName) > 0
+    if hasTable:
+        df_orig = utils.getDataFrame(session, f"select * from {tableName}")
     else:
-        uploaded_file = st.file_uploader(
-            "Upload a CSV file", type=["csv"], accept_multiple_files=False)
+        filename = utils.getFullPath("data/employees.csv")
+        if utils.isLocal():
+            uploaded_file = st.file_uploader(
+                "Upload a CSV file", type=["csv"], accept_multiple_files=False)
+            if uploaded_file is not None:
+                filename = StringIO(uploaded_file.getvalue().decode("utf-8"))
+        df_orig = utils.loadFile(filename)
 
-        if uploaded_file is not None:
-            filename = StringIO(uploaded_file.getvalue().decode("utf-8"))
-        else:
-            file = 'employees.csv'
-            filename = "data/employees.csv"
-
-        df_original = loadFile(filename)
-
-    cols = list(df_original.columns)
+    cols = list(df_orig.columns)
     child = st.selectbox("Child Column Name", cols, index=0)
     parent = st.selectbox("Parent Column Name", cols, index=1)
-    df = df_original[[child, parent]]
+    df = df_orig[[child, parent]]
 
-    if st.user is not None and 'email' in st.user:
-        st.markdown(f"user: {st.user.email}")
-
-
-def OnShowList(filename):
-    if "names" in st.session_state:
-        these_filenames = st.session_state["names"]
-        if filename in these_filenames:
-            st.error("File already exists in the list.")
-            st.stop()
-
-
-if "names" in st.session_state:
-    filenames = st.session_state["names"]
-else:
-    filenames = ["employees.csv"]
-    st.session_state["names"] = filenames
-
-tabSource, tabFormat, tabGraph, tabChart, tabAnimated = st.tabs(["Source", "Format", "Graph", "Chart", "Animated"])
-
-chart = graphs.getEdges(df_original)
+tabSource, tabPath, tabFormat, tabGraph, tabChart, tabAnim = st.tabs(
+    ["Source", "Path", "Format", "Graph", "Chart", "Animated"])
 
 with tabSource:
-    st.dataframe(df_original, use_container_width=True)
+    st.dataframe(df_orig, use_container_width=True)
+
+with tabPath:
+    if not hasTable:
+        st.warning("Select a table/view")
+    else:
+        child_index = cols.index(child) + 1
+        parent_index = cols.index(parent) + 1
+        query = f"""
+select repeat('  ', level - 1) || ${child_index} as name,
+ltrim(sys_connect_by_path(${child_index}, '.'), '.') as path
+from {tableName}
+start with ${parent_index} is null
+connect by prior ${child_index} = ${parent_index}
+order by path;
+"""
+        df_path = utils.getDataFrame(session, query)
+        st.dataframe(df_path, use_container_width=True)
 
 # show in another data format
 with tabFormat:
@@ -113,7 +114,7 @@ with tabChart:
     st.plotly_chart(fig, use_container_width=True)
 
 # show as D3 animated chart
-with tabAnimated:
+with tabAnim:
     try:
         import modules.animated as animated
 

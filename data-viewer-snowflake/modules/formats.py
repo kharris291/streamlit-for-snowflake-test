@@ -2,7 +2,6 @@ import pandas as pd
 
 indent = '  '
 
-
 def getJson(df):
     """
     { "name": "KING",
@@ -20,24 +19,26 @@ def getJson(df):
     nodes = {}
     for _, row in df.iterrows():
         name = row.iloc[0]
-        nodes[name] = {"name": name}
+        print(name)
+        nodes[name] = { "name": name }
 
     # move children under parents, and detect root
     root = None
     for _, row in df.iterrows():
         node = nodes[row.iloc[0]]
-        isRoot = pd.isna(row.iloc[1])
-        if isRoot:
-            root = node
+        print(node)
+        is_root = pd.isna(row.iloc[1])
+
+        if is_root: root = node
         else:
+            print(nodes)
             parent = nodes[row.iloc[1]]
             if "children" not in parent: parent["children"] = []
             parent["children"].append(node)
 
     return root
 
-
-def getXml(node, level=0):
+def get_xml(node, level=0):
     """
     <object>
       <name>KING</name>
@@ -66,12 +67,11 @@ def getXml(node, level=0):
     if "children" in node:
         s += f"{indent1}<children>\n"
         for child in node["children"]:
-            s += getXml(child, level + 2)
+            s += get_xml(child, level + 2)
         s += f"{indent1}</children>\n"
 
     s += f"{indent0}</object>\n"
     return s
-
 
 def getYaml(node, level=0, first=False):
     """
@@ -93,11 +93,10 @@ def getYaml(node, level=0, first=False):
         first = True
         for child in node["children"]:
             s += f"{indent0}- " if first else indent1
-            s += getYaml(child, level + 1, first)
+            s += getYaml(child, level+1, first)
             first = False
 
     return s
-
 
 def getPath(node, nodes, path=""):
     """
@@ -110,7 +109,7 @@ def getPath(node, nodes, path=""):
 
     # append full path to the top of the current node
     path += node["name"] if len(path) == 0 else f'.{node["name"]}'
-    nodes.append({"id": path})
+    nodes.append({ "id": path })
 
     if "children" in node:
         for child in node["children"]:
