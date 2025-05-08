@@ -1,6 +1,6 @@
-import utils
+import _utils
 
-conn = utils.get_connector()
+conn = _utils.get_connector()
 
 query = """
     With q1 AS(

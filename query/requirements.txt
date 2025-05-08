@@ -1,0 +1,12 @@
+pyarrow==9.0.0
+numpy<2
+pandas
+streamlit
+pybind11>=2.12
+watchdog
+plotly
+pyvis
+scipy
+networkx
+snowflake-connector-python
+snowflake-snowpark-python==1.30.0

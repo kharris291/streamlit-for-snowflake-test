@@ -1,6 +1,6 @@
-import utils
+import _utils
 
-session = utils.get_connector()
+session = _utils.get_connector()
 query = """
     With q1 AS(
         select department, floor(avg(salary)) as avg_salary from employees
